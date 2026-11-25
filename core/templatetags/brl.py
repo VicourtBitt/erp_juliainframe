@@ -60,3 +60,25 @@ def query_replace(context, **kwargs):
         else:
             query[key] = value
     return query.urlencode()
+
+
+@register.simple_tag(takes_context=True)
+def page_url(context, page, number):
+    """Querystring for ``page`` (from core.pagination.paginate) pointing at ``number``."""
+    query = context["request"].GET.copy()
+    query[page.param] = number
+    return query.urlencode()
+
+
+@register.simple_tag(takes_context=True)
+def hidden_query_inputs(context, *exclude):
+    """Hidden inputs that preserve the current querystring in a GET form."""
+    from django.utils.html import format_html, format_html_join
+
+    items = [
+        (key, value)
+        for key, values in context["request"].GET.lists()
+        if key not in exclude
+        for value in values
+    ]
+    return format_html_join("", '<input type="hidden" name="{}" value="{}">', items) if items else format_html("")

@@ -22,6 +22,6 @@
           {% if not c.n %}<form method="post" action="{% url 'finance:category_delete' c.pk %}" class="d-inline" onsubmit="return confirm('Apagar a categoria {{ c.name|escapejs }}?')">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Apagar</button></form>{% endif %}
         </td></tr>
     {% empty %}<tr><td colspan="4" class="text-muted">Nenhuma categoria cadastrada.</td></tr>{% endfor %}</tbody>
-  </table></div></div></div>
+  </table></div>{% include "core/pagination.html" with page=categories extra_class="p-2 border-top" %}</div></div>
 </div>
 {% endblock %}

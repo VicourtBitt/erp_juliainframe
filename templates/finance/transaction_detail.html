@@ -25,5 +25,5 @@
       <td>{% include "finance/_status_badge.html" with inst=i %}</td><td>{{ i.payment_date|date:"d/m/Y"|default:"—" }}</td>
       <td class="text-end">{% include "finance/_status_toggle.html" with inst=i %}</td></tr>
   {% endfor %}</tbody>
-</table></div></div>
+</table></div>{% include "core/pagination.html" with page=installments extra_class="p-2 border-top" %}</div>
 {% endblock %}

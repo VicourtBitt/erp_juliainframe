@@ -3,7 +3,6 @@ import mimetypes
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.base import ContentFile
-from django.core.paginator import Paginator
 from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,6 +13,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from core.ai import AIError, generate_text
+from core.pagination import paginate
 
 from .exporters import html_to_docx, html_to_pdf
 from .forms import (
@@ -48,13 +48,13 @@ def template_list(request):
         messages.success(request, f"Modelo '{obj.title}' criado.")
         return redirect("contracts:templates")
     q = request.GET.get("q", "").strip()
-    templates = ContractTemplate.objects.annotate(uses=Count("generated_contracts"))
+    templates = ContractTemplate.objects.annotate(uses=Count("generated_contracts")).order_by("category", "title")
     if q:
         templates = templates.filter(Q(title__icontains=q) | Q(category__icontains=q) | Q(content__icontains=q))
     return render(
         request,
         "contracts/template_list.html",
-        {"form": form, "templates": templates, "q": q, "open_form": request.method == "POST"},
+        {"form": form, "templates": paginate(request, templates, per_page=10), "q": q, "open_form": request.method == "POST"},
     )
 
 
@@ -129,7 +129,7 @@ def generated_list(request):
     return render(
         request,
         "contracts/generated_list.html",
-        {"contracts": Paginator(items, 25).get_page(request.GET.get("page")), "q": q},
+        {"contracts": paginate(request, items), "q": q},
     )
 
 
@@ -278,7 +278,7 @@ def archive(request):
         {
             "form": form,
             "open_form": request.method == "POST",
-            "contracts": Paginator(contracts, 25).get_page(request.GET.get("page")),
+            "contracts": paginate(request, contracts),
             "stats": contracts.aggregate(count=Count("id"), total=Sum("value")),
             "kinds": Contract.Kind.choices,
             "contractors": Contract.objects.order_by("contractor").values_list("contractor", flat=True).distinct(),

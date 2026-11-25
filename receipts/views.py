@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.core.files.base import ContentFile
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+
+from core.pagination import paginate
 
 from .forms import ReceiptForm, ReceiptItemFormSet
 from .models import Receipt
@@ -38,7 +39,7 @@ def receipt_list(request):
         request,
         "receipts/list.html",
         {
-            "receipts": Paginator(receipts, 25).get_page(request.GET.get("page")),
+            "receipts": paginate(request, receipts),
             "stats": stats,
             "payers": Receipt.objects.order_by("payer_name").values_list("payer_name", flat=True).distinct(),
             "payees": Receipt.objects.order_by("payee_name").values_list("payee_name", flat=True).distinct(),

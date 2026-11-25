@@ -1,13 +1,14 @@
 from datetime import date
 
 from django.contrib import messages
-from django.core.paginator import Paginator
 from django.db import transaction as db_transaction
 from django.db.models import Count, ProtectedError, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+
+from core.pagination import paginate
 
 from . import services
 from .forms import CategoryForm, PeriodForm, TransactionForm
@@ -53,8 +54,8 @@ def dashboard(request):
             "start": start,
             "end": end,
             "has_categories": Category.objects.exists(),
-            "pending_sales": pending_sales,
-            "pending_expense_groups": pending_expense_groups,
+            "pending_sales": paginate(request, pending_sales, per_page=10, param="sales_page"),
+            "pending_expense_groups": paginate(request, pending_expense_groups, per_page=10, param="exp_page"),
             **data,
         },
     )
@@ -127,10 +128,10 @@ def audit(request):
     elif status in Installment.Status.values:
         installments = installments.filter(status=status)
 
-    by_category = (
+    by_category = list(
         Transaction.objects.values("category__name", "type")
         .annotate(total=Sum("total_amount"), count=Count("id"))
-        .order_by("-total")
+        .order_by("-total", "category__name")
     )
 
     tab = request.GET.get("tab", "transactions")
@@ -139,9 +140,10 @@ def audit(request):
         "finance/audit.html",
         {
             "tab": tab,
-            "transactions": Paginator(transactions, 25).get_page(request.GET.get("page") if tab == "transactions" else 1),
-            "installments": Paginator(installments, 50).get_page(request.GET.get("page") if tab == "installments" else 1),
-            "by_category": list(by_category),
+            "transactions": paginate(request, transactions, per_page=25),
+            "installments": paginate(request, installments, per_page=50),
+            "by_category": by_category,  # full list feeds the chart
+            "by_category_page": paginate(request, by_category, per_page=25),
             "categories": Category.objects.all(),
             "entry_types": EntryType.choices,
             "filters": {"q": q, "type": entry_type, "category": category_id, "status": status},
@@ -154,7 +156,7 @@ def transaction_detail(request, pk):
     return render(
         request,
         "finance/transaction_detail.html",
-        {"transaction": obj, "installments": obj.installments.order_by("number")},
+        {"transaction": obj, "installments": paginate(request, obj.installments.order_by("number"), per_page=25)},
     )
 
 
@@ -206,7 +208,7 @@ def categories(request):
         messages.success(request, "Categoria criada.")
         return redirect("finance:categories")
     items = Category.objects.annotate(n=Count("transactions")).order_by("type", "name")
-    return render(request, "finance/categories.html", {"form": form, "categories": items})
+    return render(request, "finance/categories.html", {"form": form, "categories": paginate(request, items)})
 
 
 def category_edit(request, pk):

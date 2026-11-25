@@ -27,7 +27,8 @@
 <div class="row g-3">
   <div class="col-lg-6">
     <div class="card h-100"><div class="card-header bg-white fw-semibold">
-      <i class="bi bi-exclamation-circle text-danger me-1"></i>Parcelas atrasadas ({{ overdue_count }})</div>
+      <i class="bi bi-exclamation-circle text-danger me-1"></i>Parcelas atrasadas ({{ overdue_count }})
+      {% if overdue_count %}<a class="float-end small fw-normal" href="{% url 'finance:audit' %}?tab=installments&status=overdue">Ver todas</a>{% endif %}</div>
       <ul class="list-group list-group-flush">
         {% for i in overdue %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -40,7 +41,8 @@
     </div>
   </div>
   <div class="col-lg-6">
-    <div class="card h-100"><div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-event me-1"></i>Próximos vencimentos</div>
+    <div class="card h-100"><div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-event me-1"></i>Próximos vencimentos
+      <a class="float-end small fw-normal" href="{% url 'finance:audit' %}?tab=installments&status=pending">Ver todas</a></div>
       <ul class="list-group list-group-flush">
         {% for i in upcoming %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -53,7 +55,8 @@
     </div>
   </div>
   <div class="col-12">
-    <div class="card"><div class="card-header bg-white fw-semibold"><i class="bi bi-receipt me-1"></i>Últimos recibos</div>
+    <div class="card"><div class="card-header bg-white fw-semibold"><i class="bi bi-receipt me-1"></i>Últimos recibos
+      <a class="float-end small fw-normal" href="{% url 'receipts:list' %}">Ver todos</a></div>
       <div class="table-responsive"><table class="table table-sm mb-0">
         <tbody>
         {% for r in recent_receipts %}

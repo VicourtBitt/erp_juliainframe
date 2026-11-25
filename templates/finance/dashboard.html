@@ -84,6 +84,7 @@
         {% endfor %}
         </tbody>
       </table></div>
+      {% include "core/pagination.html" with page=pending_sales extra_class="p-2 border-top" %}
       {% else %}<div class="card-body text-success">🎉 Nenhum recebimento pendente no período!</div>{% endif %}
     </div>
   </div>
@@ -120,6 +121,7 @@
         </div>
         {% endfor %}
       </div>
+      {% include "core/pagination.html" with page=pending_expense_groups extra_class="p-2 border-top" %}
       {% else %}<div class="card-body text-success">🎉 Nenhuma despesa pendente no período!</div>{% endif %}
     </div>
   </div>

@@ -4,7 +4,7 @@
 <div class="page-header"><h1><i class="bi bi-table me-2"></i>Auditoria financeira</h1></div>
 
 <form class="card card-body mb-3" method="get">
-  <input type="hidden" name="tab" value="{{ tab }}">
+  <input type="hidden" name="tab" value="{{ tab }}">{% if request.GET.page_size %}<input type="hidden" name="page_size" value="{{ request.GET.page_size }}">{% endif %}
   <div class="row g-2 align-items-end">
     <div class="col-md-4"><label class="form-label small mb-0">Buscar descrição</label><input class="form-control form-control-sm" name="q" value="{{ filters.q }}"></div>
     <div class="col-md-2"><label class="form-label small mb-0">Tipo</label>
@@ -46,16 +46,16 @@
   {% empty %}<tr><td colspan="8" class="text-muted">Nenhuma parcela encontrada.</td></tr>{% endfor %}
   </tbody>
 </table></div></div>
-<div class="mt-2">{% include "core/pagination.html" with page=installments %}</div>
+{% include "core/pagination.html" with page=installments %}
 
 {% elif tab == "categories" %}
 <div class="row g-3">
   <div class="col-lg-5"><div class="card"><div class="table-responsive"><table class="table table-sm mb-0">
     <thead><tr><th>Categoria</th><th>Tipo</th><th class="text-end">Transações</th><th class="text-end">Valor total</th></tr></thead>
-    <tbody>{% for row in by_category %}
+    <tbody>{% for row in by_category_page %}
       <tr><td>{{ row.category__name }}</td><td>{% if row.type == "sale" %}Entrada{% else %}Saída{% endif %}</td><td class="text-end">{{ row.count }}</td><td class="text-end">{{ row.total|brl }}</td></tr>
     {% empty %}<tr><td colspan="4" class="text-muted">Sem dados.</td></tr>{% endfor %}</tbody>
-  </table></div></div></div>
+  </table></div>{% include "core/pagination.html" with page=by_category_page extra_class="p-2 border-top" %}</div></div>
   <div class="col-lg-7"><div class="card card-body"><h2 class="h6">Distribuição por categoria</h2><div class="chart-box" style="height:360px"><canvas id="byCategory"></canvas></div></div></div>
 </div>
 {{ by_category|json_script:"by-category" }}
@@ -77,7 +77,7 @@
   {% empty %}<tr><td colspan="6" class="text-muted">Nenhuma transação encontrada.</td></tr>{% endfor %}
   </tbody>
 </table></div></div>
-<div class="mt-2">{% include "core/pagination.html" with page=transactions %}</div>
+{% include "core/pagination.html" with page=transactions %}
 {% endif %}
 {% endblock %}
 
