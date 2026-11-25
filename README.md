@@ -35,7 +35,7 @@ WeasyPrint (contract PDF export) needs the Pango system libraries. On Debian/Ubu
 | `views/creator.py` | `contracts` · `/contratos/criador/` | AI drafting from free text or a template; drafts are now **saved** (`/contratos/gerados/`). |
 | `views/contract_manager.py` | `contracts` · `/contratos/modelos/` | Template CRUD. The two hardcoded photography bases are seeded by a migration. |
 | `views/analyzer.py` + `components/upload_form.py` | `contracts` · `/contratos/arquivo/` | Upload, filter, preview, download, edit, delete. |
-| `views/autentique.py`, `views/zapsign.py` | `contracts` · `/contratos/assinaturas/` | One page linking to both providers. |
+| `views/autentique.py`, `views/zapsign.py` | `contracts` · `/contratos/assinaturas/` | One page with both providers embedded in tabs (as before), plus an "open in new tab" fallback. |
 | `views/market.py` | `market` · `/mercado/` | yfinance quote + Gemini analysis, persisted history, Chart.js price chart. |
 | `ping_dbs.py` | — | Removed: there are no Supabase/Mongo free tiers to keep alive anymore. |
 
@@ -69,8 +69,6 @@ WeasyPrint (contract PDF export) needs the Pango system libraries. On Debian/Ubu
   - Recent closing prices go into the prompt.
   - AI markdown is sanitised before rendering.
   - Quotes are cached for 10 minutes.
-- **E-signature pages** used iframes that Autentique and ZapSign block. They are now links that
-  open in a new tab, next to the latest archived PDFs.
 - **Receipts** use proper line items (`ReceiptItem`). The PDF uses a Portuguese long date without
   depending on the server locale, and the payee is prefilled from the last receipt.
 - `requirements.txt` went from about 160 pinned packages to the ones the project actually uses.

@@ -341,12 +341,14 @@ def signatures(request):
     providers = [
         {
             "name": "Autentique",
+            "slug": "autentique",
             "url": settings.AUTENTIQUE_URL,
             "icon": "shield-check",
             "description": "Assinatura eletrônica com validade jurídica. Plano gratuito com assinaturas mensais limitadas.",
         },
         {
             "name": "ZapSign",
+            "slug": "zapsign",
             "url": settings.ZAPSIGN_URL,
             "icon": "pen",
             "description": "Envio para assinatura por link ou WhatsApp. Plano gratuito com assinaturas mensais limitadas.",
