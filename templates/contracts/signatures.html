@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Assinaturas{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1><i class="bi bi-pen me-2"></i>Assinatura eletrônica</h1>
+  <p class="text-muted mb-0">Envie seus contratos em PDF para assinatura em um dos serviços abaixo.</p></div></div>
+<div class="row g-3 mb-4">
+  {% for p in providers %}
+  <div class="col-md-6"><div class="card h-100"><div class="card-body">
+    <h2 class="h5"><i class="bi bi-{{ p.icon }} me-2"></i>{{ p.name }}</h2>
+    <p class="text-muted">{{ p.description }}</p>
+    <a class="btn btn-primary" href="{{ p.url }}" target="_blank" rel="noopener noreferrer">Abrir {{ p.name }} <i class="bi bi-box-arrow-up-right ms-1"></i></a>
+  </div></div></div>
+  {% endfor %}
+</div>
+<div class="alert alert-light border small">Esses serviços não permitem ser exibidos dentro de outro site, por isso abrem em uma nova aba.
+  Após a assinatura, baixe o documento assinado e envie-o para o <a href="{% url 'contracts:archive' %}">arquivo de contratos</a>.</div>
+<div class="card"><div class="card-header bg-white fw-semibold">PDFs recentes no arquivo</div>
+  <ul class="list-group list-group-flush">
+  {% for c in recent %}
+    <li class="list-group-item d-flex justify-content-between align-items-center"><span>{{ c.name }} <small class="text-muted">· {{ c.contractor }}</small></span>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'contracts:archive_file' c.pk %}?download=1"><i class="bi bi-download"></i> PDF</a></li>
+  {% empty %}<li class="list-group-item text-muted">Nenhum PDF no arquivo ainda.</li>{% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% load brl markdown_safe %}
+{% block title %}Análise de ativos{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1><i class="bi bi-bar-chart-line me-2"></i>Analista de mercado inteligente</h1>
+  <p class="text-muted mb-0">Cotações via Yahoo Finance + análise por IA. Não constitui recomendação de investimento.</p></div></div>
+{% if not ai_configured %}<div class="alert alert-warning">A chave <code>GEMINI_API_KEY</code> não está configurada; a análise por IA não funcionará.</div>{% endif %}
+<form method="post" class="card card-body mb-4" id="ticker-form">{% csrf_token %}
+  <label class="form-label" for="id_ticker">Nova análise</label>
+  <div class="input-group">{{ form.ticker|bs }}<button class="btn btn-primary" id="analyze-btn">Analisar mercado</button></div>
+  {% for e in form.ticker.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+  <div class="form-text">Tickers da B3 (ex.: PETR4) recebem o sufixo <code>.SA</code> automaticamente; outros são consultados como digitados (ex.: AAPL).</div>
+</form>
+<div class="card"><div class="card-header bg-white fw-semibold">📜 Histórico de pesquisas</div>
+  <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+    <thead><tr><th>Ticker</th><th>Empresa</th><th class="text-end">Preço</th><th class="text-end">Variação</th><th>Data</th><th></th></tr></thead>
+    <tbody>{% for a in history %}
+      <tr><td><a class="fw-semibold" href="{% url 'market:detail' a.pk %}">{{ a.ticker }}</a></td><td>{{ a.company_name }}</td>
+        <td class="text-end">{{ a.currency|currency_symbol }} {{ a.price|floatformat:2 }}</td>
+        <td class="text-end {% if a.change_percent >= 0 %}text-success{% else %}text-danger{% endif %}">{{ a.change_percent|percent }}</td>
+        <td>{{ a.created_at|date:"d/m/Y H:i" }}</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'market:detail' a.pk %}">Carregar</a></td></tr>
+    {% empty %}<tr><td colspan="6" class="text-muted">Nenhuma análise ainda.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("ticker-form").addEventListener("submit", () => {
+  const b = document.getElementById("analyze-btn"); b.disabled = true;
+  b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Analisando...';
+});
+</script>
+{% endblock %}

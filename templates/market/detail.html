@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% load brl markdown_safe static humanize %}
+{% block title %}{{ analysis.ticker }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><a href="{% url 'market:analyzer' %}" class="small"><i class="bi bi-arrow-left"></i> Nova análise</a>
+    <h1>{{ analysis.company_name }} ({{ analysis.ticker }})</h1>
+    <p class="text-muted mb-0">Análise gerada em {{ analysis.created_at|date:"d/m/Y H:i" }}</p></div>
+  <form method="post" action="{% url 'market:delete' analysis.pk %}" onsubmit="return confirm('Remover esta análise do histórico?')">{% csrf_token %}
+    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Remover</button></form>
+</div>
+{% with sym=analysis.currency|currency_symbol %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Preço na análise</div>
+    <div class="kpi-value">{{ sym }} {{ analysis.price|floatformat:2 }}</div>
+    <small class="{% if analysis.change_percent >= 0 %}text-success{% else %}text-danger{% endif %}">{{ analysis.change_percent|percent }}</small></div></div></div>
+  {% if quote %}
+  <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Preço atual</div>
+    <div class="kpi-value">{{ sym }} {{ quote.price|floatformat:2 }}</div>
+    <small class="{% if quote.change_percent >= 0 %}text-success{% else %}text-danger{% endif %}">{{ quote.change_percent|percent }}</small></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Máxima / mínima (dia)</div>
+    <div class="kpi-value fs-5">{{ quote.last.high|floatformat:2 }} / {{ quote.last.low|floatformat:2 }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Volume</div>
+    <div class="kpi-value fs-5">{{ quote.last.volume|intcomma }}</div></div></div></div>
+  {% endif %}
+</div>
+{% endwith %}
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card card-body h-100"><h2 class="h6">📈 Performance (30 dias)</h2>
+    {% if chart %}<div class="chart-box"><canvas id="price"></canvas></div>{% else %}<div class="alert alert-warning mb-0">{{ quote_error }}</div>{% endif %}
+  </div></div>
+  <div class="col-lg-6"><div class="card card-body h-100"><h2 class="h6">🧠 Análise de inteligência artificial</h2><hr class="mt-1">
+    <div class="analysis">{{ analysis.analysis_text|markdown_safe }}</div>
+  </div></div>
+</div>
+{% if history %}
+<div class="mt-4"><h2 class="h6">Outras análises</h2>
+  <div class="d-flex flex-wrap gap-2">{% for a in history %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'market:detail' a.pk %}">{{ a.ticker }} · {{ a.created_at|date:"d/m" }}</a>{% endfor %}</div>
+</div>
+{% endif %}
+{{ chart|json_script:"chart-data" }}
+{% endblock %}
+{% block scripts %}{% if chart %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+<script>
+(function () {
+  const d = JSON.parse(document.getElementById("chart-data").textContent);
+  JuCharts.make("price", { type: "line",
+    data: { labels: d.labels.map((s) => s.split("-").reverse().slice(0, 2).join("/")), datasets: [{ label: "Fechamento", data: d.close, borderColor: "#2962FF", backgroundColor: "rgba(41,98,255,.08)", fill: true, tension: .2, pointRadius: 2 }] },
+    options: { plugins: { legend: { display: false } } } });
+})();
+</script>
+{% endif %}{% endblock %}

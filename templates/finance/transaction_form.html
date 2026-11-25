@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Editar transação{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Editar transação</h1></div>
+<div class="card card-body" style="max-width:800px">
+  {% if has_paid %}<div class="alert alert-warning py-2">Esta transação já possui parcelas pagas: só é possível alterar descrição e categoria.</div>{% endif %}
+  <form method="post">{% csrf_token %}
+    {% include "core/form_errors.html" %}
+    {% for field in form %}{% include "core/field.html" %}{% endfor %}
+    <div class="form-text mb-3">Alterar valor, data ou parcelas recria o cronograma de parcelas.</div>
+    <button class="btn btn-primary">Salvar</button>
+    <a class="btn btn-outline-secondary" href="{% url 'finance:transaction_detail' transaction.pk %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

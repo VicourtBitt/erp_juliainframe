@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Criador de contratos{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1><i class="bi bi-magic me-2"></i>Criador de contratos inteligente</h1>
+    <p class="text-muted mb-0">Crie contratos personalizados a partir de modelos ou do zero com IA.</p></div>
+  <a class="btn btn-outline-secondary" href="{% url 'contracts:generated_list' %}"><i class="bi bi-file-earmark-text me-1"></i>Contratos gerados</a>
+</div>
+{% if not ai_configured %}<div class="alert alert-warning">A chave <code>GEMINI_API_KEY</code> não está configurada; a geração por IA não funcionará.</div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form method="post" class="card card-body" id="creator-form">{% csrf_token %}
+      {% include "core/form_errors.html" %}
+      {{ form.template }}
+      {% include "core/field.html" with field=form.context %}
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" id="gen-btn"><i class="bi bi-stars me-1"></i>Gerar contrato com IA</button>
+        <a class="btn btn-outline-secondary" href="{% url 'contracts:creator' %}"><i class="bi bi-eraser me-1"></i>Limpar</a>
+      </div>
+      <div class="form-text mt-2">A geração pode levar até um minuto.</div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-header bg-white fw-semibold">🚀 Começar a partir de um modelo</div>
+      <div class="list-group list-group-flush">
+        {% for t in templates %}
+          <a class="list-group-item list-group-item-action {% if form.template.value|stringformat:'s' == t.pk|stringformat:'s' %}active{% endif %}" href="?template={{ t.pk }}">
+            {% if t.category %}<span class="badge text-bg-light me-1">{{ t.category }}</span>{% endif %}{{ t.title }}
+          </a>
+        {% empty %}<div class="list-group-item text-muted">Nenhum modelo. <a href="{% url 'contracts:templates' %}">Criar modelos</a>.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("creator-form").addEventListener("submit", (e) => {
+  const b = document.getElementById("gen-btn");
+  b.disabled = true;
+  b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Gerando contrato com IA...';
+});
+</script>
+{% endblock %}

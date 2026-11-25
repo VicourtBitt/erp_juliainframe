@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% load brl %}
+{% block title %}Arquivo de contratos{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1><i class="bi bi-archive me-2"></i>Arquivo de contratos</h1>
+  <p class="text-muted mb-0">Faça upload dos seus contratos para consulta e auditoria.</p></div></div>
+
+<div class="accordion mb-3"><div class="accordion-item">
+  <h2 class="accordion-header"><button class="accordion-button {% if not open_form %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#upload"><i class="bi bi-cloud-upload me-2"></i>Enviar contrato</button></h2>
+  <div id="upload" class="accordion-collapse collapse {% if open_form %}show{% endif %}"><div class="accordion-body">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      {% include "core/form_errors.html" %}
+      <div class="row">
+        <div class="col-md-6">{% include "core/field.html" with field=form.name %}</div>
+        <div class="col-md-6">{% include "core/field.html" with field=form.contractor %}</div>
+        <div class="col-md-4">{% include "core/field.html" with field=form.contract_type %}</div>
+        <div class="col-md-4">{% include "core/field.html" with field=form.contract_date %}</div>
+        <div class="col-md-4">{% include "core/field.html" with field=form.value %}</div>
+        <div class="col-12">{% include "core/field.html" with field=form.file %}</div>
+      </div>
+      <button class="btn btn-primary">Enviar</button>
+    </form>
+  </div></div>
+</div></div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card kpi mb-3"><div class="card-body"><div class="kpi-label">Contratos</div><div class="kpi-value">{{ stats.count }}</div></div></div>
+    <div class="card kpi"><div class="card-body"><div class="kpi-label">Valor total</div><div class="kpi-value">{{ stats.total|brl }}</div></div></div>
+  </div>
+  <div class="col-md-9">
+    <form class="card card-body h-100" method="get"><div class="row g-2 align-items-end">
+      <div class="col-md-4"><label class="form-label small mb-0">Buscar</label><input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="Nome ou contratante"></div>
+      <div class="col-md-3"><label class="form-label small mb-0">Tipo</label><select class="form-select form-select-sm" name="type"><option value="">Todos</option>
+        {% for v, l in kinds %}<option value="{{ v }}" {% if filters.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div class="col-md-3"><label class="form-label small mb-0">Contratante</label><select class="form-select form-select-sm" name="contractor"><option value="">Todos</option>
+        {% for c in contractors %}<option {% if filters.contractor == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Filtrar</button></div>
+    </div></form>
+  </div>
+</div>
+
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Nome</th><th>Ext.</th><th>Tipo</th><th>Contratante</th><th>Data</th><th class="text-end">Valor</th><th class="text-end">Ações</th></tr></thead>
+  <tbody>{% for c in contracts %}
+    <tr>
+      <td>{{ c.name }}{% if c.generated_from %} <i class="bi bi-stars text-primary" title="Gerado pelo criador"></i>{% endif %}</td>
+      <td><span class="badge text-bg-light">{{ c.extension|upper }}</span></td>
+      <td>{{ c.contract_type }}</td><td>{{ c.contractor }}</td><td>{{ c.contract_date|date:"d/m/Y" }}</td>
+      <td class="text-end">{{ c.value|brl }}</td>
+      <td class="text-end text-nowrap">
+        {% if c.previewable %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'contracts:archive_preview' c.pk %}" title="Visualizar"><i class="bi bi-eye"></i></a>
+        {% else %}<button class="btn btn-sm btn-outline-secondary" disabled title="Pré-visualização indisponível para este formato"><i class="bi bi-eye-slash"></i></button>{% endif %}
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'contracts:archive_file' c.pk %}?download=1" title="Baixar"><i class="bi bi-download"></i></a>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'contracts:archive_edit' c.pk %}" title="Editar"><i class="bi bi-pencil"></i></a>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'contracts:archive_delete' c.pk %}" title="Apagar"><i class="bi bi-trash"></i></a>
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="7" class="text-muted">Nenhum contrato encontrado.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+<div class="mt-2">{% include "core/pagination.html" with page=contracts %}</div>
+{% endblock %}

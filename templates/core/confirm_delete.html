@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Confirmar exclusão{% endblock %}
+{% block content %}
+<div class="card border-danger" style="max-width:600px">
+  <div class="card-body">
+    <h1 class="h4 card-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Apagar {{ kind }}?</h1>
+    <p>Tem certeza de que deseja apagar <strong>{{ object }}</strong>? Esta ação não pode ser desfeita.</p>
+    {% if warning %}<div class="alert alert-warning py-2">{{ warning }}</div>{% endif %}
+    <form method="post">{% csrf_token %}
+      <button class="btn btn-danger">Apagar</button>
+      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

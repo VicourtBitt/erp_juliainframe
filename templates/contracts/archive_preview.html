@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load brl %}
+{% block title %}{{ contract.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><a href="{% url 'contracts:archive' %}" class="small"><i class="bi bi-arrow-left"></i> Arquivo</a>
+    <h1>{{ contract.name }}</h1>
+    <p class="text-muted mb-0">{{ contract.contract_type }} · {{ contract.contractor }} · {{ contract.contract_date|date:"d/m/Y" }} · {{ contract.value|brl }}</p></div>
+  <a class="btn btn-primary" href="{% url 'contracts:archive_file' contract.pk %}?download=1"><i class="bi bi-download me-1"></i>Baixar</a>
+</div>
+{% if contract.extension in "png jpg jpeg" %}
+  <img class="img-fluid border rounded bg-white" src="{% url 'contracts:archive_file' contract.pk %}" alt="{{ contract.name }}">
+{% elif contract.extension in "html htm" %}
+  <iframe class="doc-frame" sandbox src="{% url 'contracts:archive_file' contract.pk %}" title="{{ contract.name }}"></iframe>
+{% else %}
+  <iframe class="doc-frame" src="{% url 'contracts:archive_file' contract.pk %}" title="{{ contract.name }}"></iframe>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "base.html" %}{% load brl static %}
+{% block title %}Dashboard financeiro{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-graph-up me-2"></i>Dashboard financeiro</h1>
+  <form class="d-flex flex-wrap align-items-end gap-2" method="get">
+    <div><label class="form-label small mb-0" for="id_start">De</label>{{ period_form.start|bs:"form-control-sm" }}</div>
+    <div><label class="form-label small mb-0" for="id_end">Até</label>{{ period_form.end|bs:"form-control-sm" }}</div>
+    <button class="btn btn-sm btn-outline-primary">Aplicar</button>
+    <a class="btn btn-sm btn-link" href="{% url 'finance:dashboard' %}">Padrão</a>
+  </form>
+</div>
+{% if period_form.non_field_errors %}<div class="alert alert-warning">{{ period_form.non_field_errors.0 }} Usando o período padrão.</div>{% endif %}
+
+<div class="accordion mb-4" id="novo">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button {% if not form_has_errors %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#newEntry">
+        <i class="bi bi-plus-circle me-2"></i>Adicionar novo lançamento
+      </button>
+    </h2>
+    <div id="newEntry" class="accordion-collapse collapse {% if form_has_errors %}show{% endif %}">
+      <div class="accordion-body">
+        {% if not has_categories %}
+          <div class="alert alert-info mb-0">Cadastre ao menos uma categoria em <a href="{% url 'finance:categories' %}">Categorias</a> antes de lançar.</div>
+        {% else %}
+        <form method="post">{% csrf_token %}
+          {% include "core/form_errors.html" %}
+          <div class="row">
+            <div class="col-md-6">{% include "core/field.html" with field=form.description %}</div>
+            <div class="col-md-6">{% include "core/field.html" with field=form.category %}</div>
+            <div class="col-md-4">{% include "core/field.html" with field=form.total_amount %}</div>
+            <div class="col-md-4">{% include "core/field.html" with field=form.transaction_date %}</div>
+            <div class="col-md-4">{% include "core/field.html" with field=form.installments_count %}</div>
+          </div>
+          <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Salvar</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg"><div class="card kpi h-100"><div class="card-body"><div class="kpi-label">Entradas no período</div><div class="kpi-value text-success">{{ kpis.income|brl }}</div></div></div></div>
+  <div class="col-6 col-lg"><div class="card kpi h-100"><div class="card-body"><div class="kpi-label">Saídas no período</div><div class="kpi-value text-danger">{{ kpis.expense|brl }}</div></div></div></div>
+  <div class="col-6 col-lg"><div class="card kpi h-100"><div class="card-body"><div class="kpi-label">Resultado no período</div><div class="kpi-value {% if kpis.profit < 0 %}text-danger{% elif kpis.profit > 0 %}text-success{% endif %}">{{ kpis.profit|brl }}</div></div></div></div>
+  <div class="col-6 col-lg"><div class="card kpi h-100"><div class="card-body"><div class="kpi-label">Ticket médio (vendas)</div><div class="kpi-value">{{ kpis.avg_ticket|brl }}</div></div></div></div>
+  <div class="col-12 col-lg"><div class="card kpi h-100"><div class="card-body"><div class="kpi-label">Total atrasado (geral)</div><div class="kpi-value {% if kpis.overdue %}text-danger{% endif %}">{{ kpis.overdue|brl }}</div></div></div></div>
+</div>
+
+{% if not has_data %}
+  <div class="alert alert-info">Nenhuma parcela com vencimento entre {{ start|date:"d/m/Y" }} e {{ end|date:"d/m/Y" }}.</div>
+{% else %}
+<div class="row g-3 mb-4">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body"><h2 class="h6">Fluxo de caixa mensal e saldo acumulado</h2><div class="chart-box"><canvas id="cashflow"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body"><h2 class="h6">Status das parcelas (pago × pendente)</h2><div class="chart-box"><canvas id="status"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body"><h2 class="h6">Recebimentos × pagamentos por mês</h2><div class="chart-box"><canvas id="incomeExpense"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body"><h2 class="h6">Evolução das despesas por categoria</h2>
+    {% if chart.categories %}<div class="chart-box"><canvas id="categories"></canvas></div>{% else %}<p class="text-muted">Nenhuma despesa no período.</p>{% endif %}
+  </div></div></div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header bg-white fw-semibold">Recebimentos pendentes (vendas) no período</div>
+      {% if pending_sales %}
+      <div class="table-responsive"><table class="table table-sm mb-0">
+        <thead><tr><th>Descrição</th><th>Vencimento</th><th class="text-end">Valor</th><th></th></tr></thead>
+        <tbody>
+        {% for i in pending_sales %}
+          <tr>
+            <td><a href="{% url 'finance:transaction_detail' i.transaction_id %}">{{ i.transaction.description }}</a> <small class="text-muted">{{ i.number }}/{{ i.transaction.installments_count }}</small></td>
+            <td class="{% if i.is_overdue %}status-overdue{% endif %}">{{ i.due_date|date:"d/m/Y" }}</td>
+            <td class="text-end">{{ i.amount|brl }}</td>
+            <td class="text-end">
+              <form method="post" action="{% url 'finance:installment_status' i.pk %}">{% csrf_token %}
+                <input type="hidden" name="status" value="paid"><button class="btn btn-sm btn-success">Recebido</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<div class="card-body text-success">🎉 Nenhum recebimento pendente no período!</div>{% endif %}
+    </div>
+  </div>
+  <div class="col-xl-6">
+    <div class="card h-100">
+      <div class="card-header bg-white fw-semibold">Despesas pendentes no período</div>
+      {% if pending_expense_groups %}
+      <div class="accordion accordion-flush" id="expAcc">
+        {% for g in pending_expense_groups %}
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#exp{{ forloop.counter }}">
+            <strong class="me-2 text-capitalize">{{ g.month|date:"F/Y" }}</strong> — {{ g.items|length }} pendente(s) · {{ g.total|brl }}
+          </button></h3>
+          <div id="exp{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#expAcc">
+            <div class="accordion-body p-2">
+              <form method="post" action="{% url 'finance:installments_pay_month' %}" class="mb-2">{% csrf_token %}
+                <input type="hidden" name="month" value="{{ g.month|date:'Y-m-d' }}"><input type="hidden" name="type" value="expense">
+                {% for i in g.items %}<input type="hidden" name="ids" value="{{ i.pk }}">{% endfor %}
+                <button class="btn btn-sm btn-primary w-100">Pagar todas as {{ g.items|length }} despesas de {{ g.month|date:"m/Y" }}</button>
+              </form>
+              <table class="table table-sm mb-0"><tbody>
+                {% for i in g.items %}
+                <tr>
+                  <td><a href="{% url 'finance:transaction_detail' i.transaction_id %}">{{ i.transaction.description }}</a> <small class="text-muted">{{ i.transaction.category.name }}</small></td>
+                  <td class="{% if i.is_overdue %}status-overdue{% endif %}">{{ i.due_date|date:"d/m/Y" }}</td>
+                  <td class="text-end">{{ i.amount|brl }}</td>
+                  <td class="text-end"><form method="post" action="{% url 'finance:installment_status' i.pk %}">{% csrf_token %}
+                    <input type="hidden" name="status" value="paid"><button class="btn btn-sm btn-outline-primary">Pagar</button></form></td>
+                </tr>
+                {% endfor %}
+              </tbody></table>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}<div class="card-body text-success">🎉 Nenhuma despesa pendente no período!</div>{% endif %}
+    </div>
+  </div>
+</div>
+{{ chart|json_script:"chart-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+<script>
+(function () {
+  const d = JSON.parse(document.getElementById("chart-data").textContent);
+  const C = JuCharts, labels = d.labels.map(C.monthLabel);
+  const GREEN = "#00A36C", RED = "#D22B2B";
+  const moneyAxis = { ticks: { callback: (v) => C.money(v) } };
+
+  C.make("cashflow", {
+    data: { labels, datasets: [
+      { type: "bar", label: "Recebimentos", data: d.income, backgroundColor: GREEN, stack: "flow" },
+      { type: "bar", label: "Pagamentos", data: d.expense.map((v) => -v), backgroundColor: RED, stack: "flow" },
+      { type: "line", label: "Saldo acumulado", data: d.balance, borderColor: "#2962FF", backgroundColor: "#2962FF", yAxisID: "y1", tension: .2 },
+    ]},
+    options: { plugins: { tooltip: C.tooltipMoney }, scales: { x: { stacked: true }, y: { ...moneyAxis, stacked: true }, y1: { ...moneyAxis, position: "right", grid: { drawOnChartArea: false } } } },
+  });
+  C.make("status", {
+    type: "bar",
+    data: { labels, datasets: [
+      { label: "Pago", data: d.paid, backgroundColor: "#4C6EF5" },
+      { label: "Pendente", data: d.pending, backgroundColor: "#FFA94D" },
+    ]},
+    options: { plugins: { tooltip: C.tooltipMoney }, scales: { x: { stacked: true }, y: { ...moneyAxis, stacked: true } } },
+  });
+  C.make("incomeExpense", {
+    type: "bar",
+    data: { labels, datasets: [
+      { label: "Recebimentos", data: d.income, backgroundColor: GREEN },
+      { label: "Pagamentos", data: d.expense, backgroundColor: RED },
+    ]},
+    options: { plugins: { tooltip: C.tooltipMoney }, scales: { y: moneyAxis } },
+  });
+  C.make("categories", {
+    type: "line",
+    data: { labels, datasets: d.categories.map((c, i) => ({ label: c.name, data: c.data, borderColor: C.palette[i % C.palette.length], backgroundColor: C.palette[i % C.palette.length], tension: .2 })) },
+    options: { plugins: { tooltip: C.tooltipMoney }, scales: { y: moneyAxis } },
+  });
+})();
+</script>
+{% endblock %}

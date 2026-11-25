@@ -1,0 +1,1 @@
+{% with s=inst.display_status %}<span class="status-{{ s }}">{% if s == "paid" %}Pago{% elif s == "overdue" %}Atrasado{% else %}Pendente{% endif %}</span>{% endwith %}

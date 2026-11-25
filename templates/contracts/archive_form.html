@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Editar contrato{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Editar contrato</h1></div>
+<form method="post" enctype="multipart/form-data" class="card card-body" style="max-width:800px">{% csrf_token %}
+  {% include "core/form_errors.html" %}
+  {% for field in form %}{% include "core/field.html" %}{% endfor %}
+  <div class="form-text mb-3">Deixe o arquivo em branco para manter o atual ({{ contract.download_name }}).</div>
+  <div><button class="btn btn-primary">Salvar</button>
+  <a class="btn btn-outline-secondary" href="{% url 'contracts:archive' %}">Cancelar</a></div>
+</form>
+{% endblock %}
