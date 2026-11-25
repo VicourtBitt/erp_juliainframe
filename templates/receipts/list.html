@@ -11,7 +11,7 @@
     <div class="card kpi"><div class="card-body"><div class="kpi-label">Valor total</div><div class="kpi-value">{{ stats.total|brl }}</div></div></div>
   </div>
   <div class="col-md-9">
-    <form class="card card-body h-100" method="get">
+    <form class="card card-body h-100" method="get">{% if request.GET.page_size %}<input type="hidden" name="page_size" value="{{ request.GET.page_size }}">{% endif %}
       <div class="row g-2 align-items-end">
         <div class="col-md-4"><label class="form-label small mb-0">Buscar</label><input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="Nome ou serviço"></div>
         <div class="col-md-3"><label class="form-label small mb-0">Contratante</label>
@@ -40,5 +40,5 @@
   {% empty %}<tr><td colspan="6" class="text-muted">Nenhum recibo encontrado.</td></tr>{% endfor %}
   </tbody>
 </table></div></div>
-<div class="mt-2">{% include "core/pagination.html" with page=receipts %}</div>
+{% include "core/pagination.html" with page=receipts %}
 {% endblock %}

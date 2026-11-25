@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.ai import AIError, generate_text
+from core.pagination import paginate
 
 from .models import MarketAnalysis
 from .services import MarketDataError, build_prompt, fetch_quote
@@ -45,7 +46,7 @@ def analyzer(request):
         "market/analyzer.html",
         {
             "form": form,
-            "history": MarketAnalysis.objects.all()[:20],
+            "history": paginate(request, MarketAnalysis.objects.all()),
             "ai_configured": bool(settings.GEMINI_API_KEY),
         },
     )

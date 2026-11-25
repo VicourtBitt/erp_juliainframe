@@ -21,6 +21,7 @@
         <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'market:detail' a.pk %}">Carregar</a></td></tr>
     {% empty %}<tr><td colspan="6" class="text-muted">Nenhuma análise ainda.</td></tr>{% endfor %}</tbody>
   </table></div>
+  {% include "core/pagination.html" with page=history extra_class="p-2 border-top" %}
 </div>
 {% endblock %}
 {% block scripts %}
