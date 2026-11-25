@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Editar categoria{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Editar categoria</h1></div>
+<div class="card card-body" style="max-width:600px">
+  <form method="post">{% csrf_token %}
+    {% include "core/form_errors.html" %}
+    {% for field in form %}{% include "core/field.html" %}{% endfor %}
+    <button class="btn btn-primary">Salvar</button>
+    <a class="btn btn-outline-secondary" href="{% url 'finance:categories' %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

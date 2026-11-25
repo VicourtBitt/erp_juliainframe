@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Assinaturas{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1><i class="bi bi-pen me-2"></i>Assinatura eletrônica</h1>
+  <p class="text-muted mb-0">Assine seus contratos em PDF por um dos serviços abaixo.</p></div></div>
+
+<ul class="nav nav-tabs" role="tablist">
+  {% for p in providers %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if forloop.first %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#sig-{{ p.slug }}" type="button" role="tab">
+      <i class="bi bi-{{ p.icon }} me-1"></i>{{ p.name }}
+    </button>
+  </li>
+  {% endfor %}
+</ul>
+<div class="tab-content card border-top-0 rounded-top-0 mb-4">
+  {% for p in providers %}
+  <div class="tab-pane fade {% if forloop.first %}show active{% endif %} p-3" id="sig-{{ p.slug }}" role="tabpanel">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <span class="text-muted small">{{ p.description }}</span>
+      <a class="btn btn-sm btn-outline-primary" href="{{ p.url }}" target="_blank" rel="noopener noreferrer">Abrir em nova aba <i class="bi bi-box-arrow-up-right ms-1"></i></a>
+    </div>
+    <iframe class="doc-frame" style="height:800px" src="{{ p.url }}" title="{{ p.name }}" loading="lazy"
+            allow="clipboard-write; camera; geolocation"></iframe>
+    <div class="form-text">Se a área acima ficar em branco ou pedir login repetidamente (alguns navegadores bloqueiam cookies de terceiros), use "Abrir em nova aba".</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="alert alert-light border small">Após a assinatura, baixe o documento assinado e envie-o para o <a href="{% url 'contracts:archive' %}">arquivo de contratos</a>.</div>
+<div class="card"><div class="card-header bg-white fw-semibold">PDFs recentes no arquivo</div>
+  <ul class="list-group list-group-flush">
+  {% for c in recent %}
+    <li class="list-group-item d-flex justify-content-between align-items-center"><span>{{ c.name }} <small class="text-muted">· {{ c.contractor }}</small></span>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'contracts:archive_file' c.pk %}?download=1"><i class="bi bi-download"></i> PDF</a></li>
+  {% empty %}<li class="list-group-item text-muted">Nenhum PDF no arquivo ainda.</li>{% endfor %}
+  </ul>
+</div>
+{% endblock %}

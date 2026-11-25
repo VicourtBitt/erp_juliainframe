@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Editar HTML{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Editar HTML do contrato</h1></div>
+<div class="alert alert-info py-2">Use <code>{% templatetag openvariable %} nome_do_campo {% templatetag closevariable %}</code> para criar campos variáveis. Alterações invalidam a versão finalizada.</div>
+<form method="post" class="card card-body">{% csrf_token %}
+  {% include "core/form_errors.html" %}
+  {% for field in form %}{% include "core/field.html" %}{% endfor %}
+  <div><button class="btn btn-primary">Salvar</button>
+  <a class="btn btn-outline-secondary" href="{{ contract.get_absolute_url }}">Cancelar</a></div>
+</form>
+{% endblock %}

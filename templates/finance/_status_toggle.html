@@ -1,0 +1,7 @@
+<form method="post" action="{% url 'finance:installment_status' inst.pk %}" class="d-inline">{% csrf_token %}
+  {% if inst.status == "paid" %}
+    <input type="hidden" name="status" value="pending"><button class="btn btn-sm btn-outline-secondary" title="Estornar pagamento">Estornar</button>
+  {% else %}
+    <input type="hidden" name="status" value="paid"><button class="btn btn-sm btn-outline-success">{% if inst.transaction.type == "sale" %}Recebido{% else %}Pagar{% endif %}</button>
+  {% endif %}
+</form>

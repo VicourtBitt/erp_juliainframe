@@ -1,0 +1,99 @@
+{% extends "base.html" %}{% load brl %}
+{% block title %}Auditoria financeira{% endblock %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-table me-2"></i>Auditoria financeira</h1></div>
+
+<form class="card card-body mb-3" method="get">
+  <input type="hidden" name="tab" value="{{ tab }}">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4"><label class="form-label small mb-0">Buscar descrição</label><input class="form-control form-control-sm" name="q" value="{{ filters.q }}"></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Tipo</label>
+      <select class="form-select form-select-sm" name="type"><option value="">Todos</option>
+        {% for v, l in entry_types %}<option value="{{ v }}" {% if filters.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Categoria</label>
+      <select class="form-select form-select-sm" name="category"><option value="">Todas</option>
+        {% for c in categories %}<option value="{{ c.pk }}" {% if filters.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+    {% if tab == "installments" %}
+    <div class="col-md-2"><label class="form-label small mb-0">Status</label>
+      <select class="form-select form-select-sm" name="status"><option value="">Todos</option>
+        <option value="pending" {% if filters.status == "pending" %}selected{% endif %}>Pendente</option>
+        <option value="overdue" {% if filters.status == "overdue" %}selected{% endif %}>Atrasado</option>
+        <option value="paid" {% if filters.status == "paid" %}selected{% endif %}>Pago</option></select></div>
+    {% endif %}
+    <div class="col-md-1"><button class="btn btn-sm btn-primary w-100">Filtrar</button></div>
+  </div>
+</form>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {% if tab == 'transactions' %}active{% endif %}" href="?{% query_replace tab='transactions' page='' status='' %}"><i class="bi bi-search me-1"></i>Transações</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'installments' %}active{% endif %}" href="?{% query_replace tab='installments' page='' %}"><i class="bi bi-calendar3 me-1"></i>Parcelas</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'categories' %}active{% endif %}" href="?{% query_replace tab='categories' page='' %}"><i class="bi bi-pie-chart me-1"></i>Por categoria</a></li>
+</ul>
+
+{% if tab == "installments" %}
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Vencimento</th><th class="text-end">Valor</th><th>Status</th><th>Descrição</th><th>Categoria</th><th>Parcela</th><th>Pagamento</th><th></th></tr></thead>
+  <tbody>
+  {% for i in installments %}
+    <tr>
+      <td>{{ i.due_date|date:"d/m/Y" }}</td><td class="text-end">{{ i.amount|brl }}</td>
+      <td>{% include "finance/_status_badge.html" with inst=i %}</td>
+      <td><a href="{% url 'finance:transaction_detail' i.transaction_id %}">{{ i.transaction.description }}</a></td>
+      <td>{{ i.transaction.category.name }}</td><td>{{ i.number }}/{{ i.transaction.installments_count }}</td>
+      <td>{{ i.payment_date|date:"d/m/Y"|default:"—" }}</td>
+      <td class="text-end">{% include "finance/_status_toggle.html" with inst=i %}</td>
+    </tr>
+  {% empty %}<tr><td colspan="8" class="text-muted">Nenhuma parcela encontrada.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<div class="mt-2">{% include "core/pagination.html" with page=installments %}</div>
+
+{% elif tab == "categories" %}
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card"><div class="table-responsive"><table class="table table-sm mb-0">
+    <thead><tr><th>Categoria</th><th>Tipo</th><th class="text-end">Transações</th><th class="text-end">Valor total</th></tr></thead>
+    <tbody>{% for row in by_category %}
+      <tr><td>{{ row.category__name }}</td><td>{% if row.type == "sale" %}Entrada{% else %}Saída{% endif %}</td><td class="text-end">{{ row.count }}</td><td class="text-end">{{ row.total|brl }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">Sem dados.</td></tr>{% endfor %}</tbody>
+  </table></div></div></div>
+  <div class="col-lg-7"><div class="card card-body"><h2 class="h6">Distribuição por categoria</h2><div class="chart-box" style="height:360px"><canvas id="byCategory"></canvas></div></div></div>
+</div>
+{{ by_category|json_script:"by-category" }}
+
+{% else %}
+<p class="text-muted small">Clique numa transação para ver as parcelas.</p>
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th class="text-end">Valor total</th><th class="text-center">Parcelas pagas</th></tr></thead>
+  <tbody>
+  {% for t in transactions %}
+    <tr>
+      <td>{{ t.transaction_date|date:"d/m/Y" }}</td>
+      <td><a href="{% url 'finance:transaction_detail' t.pk %}">{{ t.description }}</a></td>
+      <td>{{ t.category.name }}</td>
+      <td>{% if t.type == "sale" %}<span class="badge text-bg-success">Entrada</span>{% else %}<span class="badge text-bg-danger">Saída</span>{% endif %}</td>
+      <td class="text-end">{{ t.total_amount|brl }}</td>
+      <td class="text-center">{{ t.paid_count }}/{{ t.installments_count }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="6" class="text-muted">Nenhuma transação encontrada.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<div class="mt-2">{% include "core/pagination.html" with page=transactions %}</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}{% if tab == "categories" %}{% load static %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+<script>
+(function () {
+  const rows = JSON.parse(document.getElementById("by-category").textContent);
+  JuCharts.make("byCategory", {
+    type: "bar",
+    data: { labels: rows.map((r) => r.category__name), datasets: [{ label: "Valor total", data: rows.map((r) => Number(r.total)),
+      backgroundColor: rows.map((r) => (r.type === "sale" ? "#00A36C" : "#D22B2B")) }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => JuCharts.money(c.parsed.x) } } },
+      scales: { x: { ticks: { callback: (v) => JuCharts.money(v) } } } },
+  });
+})();
+</script>
+{% endif %}{% endblock %}

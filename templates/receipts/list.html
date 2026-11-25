@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% load brl %}
+{% block title %}Recibos{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-receipt me-2"></i>Recibos</h1>
+  <a class="btn btn-primary" href="{% url 'receipts:create' %}"><i class="bi bi-plus-lg me-1"></i>Novo recibo</a>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card kpi mb-3"><div class="card-body"><div class="kpi-label">Recibos</div><div class="kpi-value">{{ stats.count }}</div></div></div>
+    <div class="card kpi"><div class="card-body"><div class="kpi-label">Valor total</div><div class="kpi-value">{{ stats.total|brl }}</div></div></div>
+  </div>
+  <div class="col-md-9">
+    <form class="card card-body h-100" method="get">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label small mb-0">Buscar</label><input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="Nome ou serviço"></div>
+        <div class="col-md-3"><label class="form-label small mb-0">Contratante</label>
+          <select class="form-select form-select-sm" name="payer"><option value="">Todos</option>{% for p in payers %}<option {% if filters.payer == p %}selected{% endif %}>{{ p }}</option>{% endfor %}</select></div>
+        <div class="col-md-3"><label class="form-label small mb-0">Contratado</label>
+          <select class="form-select form-select-sm" name="payee"><option value="">Todos</option>{% for p in payees %}<option {% if filters.payee == p %}selected{% endif %}>{{ p }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Filtrar</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Nº</th><th>Data</th><th>Contratante</th><th>Contratado</th><th class="text-end">Valor</th><th class="text-end">Ações</th></tr></thead>
+  <tbody>
+  {% for r in receipts %}
+    <tr>
+      <td><a href="{% url 'receipts:detail' r.pk %}">{{ r.number }}</a></td>
+      <td>{{ r.issue_date|date:"d/m/Y" }}</td><td>{{ r.payer_name }}</td><td>{{ r.payee_name }}</td>
+      <td class="text-end">{{ r.total|brl }}</td>
+      <td class="text-end text-nowrap">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'receipts:detail' r.pk %}" title="Visualizar"><i class="bi bi-eye"></i></a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'receipts:pdf' r.pk %}?download=1" title="Baixar"><i class="bi bi-download"></i></a>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'receipts:delete' r.pk %}" title="Apagar"><i class="bi bi-trash"></i></a>
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="6" class="text-muted">Nenhum recibo encontrado.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<div class="mt-2">{% include "core/pagination.html" with page=receipts %}</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ contract.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><a href="{% url 'contracts:generated_list' %}" class="small"><i class="bi bi-arrow-left"></i> Contratos gerados</a>
+    <h1>{{ contract.title }} {% if contract.is_final %}<span class="badge text-bg-success fs-6 align-middle">Finalizado</span>{% else %}<span class="badge text-bg-secondary fs-6 align-middle">Rascunho</span>{% endif %}</h1></div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'contracts:generated_edit_html' contract.pk %}"><i class="bi bi-code-slash me-1"></i>Editar HTML</a>
+    <a class="btn btn-outline-danger" href="{% url 'contracts:generated_delete' contract.pk %}" title="Apagar" aria-label="Apagar"><i class="bi bi-trash"></i></a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-5">
+    <div class="card card-body mb-3">
+      <h2 class="h6">Preencha os campos variáveis</h2>
+      {% if contract.fields %}
+      <form method="post">{% csrf_token %}
+        <div class="row">{% for field in form %}<div class="col-md-6">{% include "core/field.html" %}</div>{% endfor %}</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-outline-primary" name="action" value="save"><i class="bi bi-save me-1"></i>Salvar rascunho</button>
+          <button class="btn btn-primary" name="action" value="finalize"><i class="bi bi-check2-circle me-1"></i>Processar e finalizar</button>
+        </div>
+      </form>
+      {% else %}
+        <p class="text-muted">O modelo gerado não possui campos variáveis.</p>
+        <form method="post">{% csrf_token %}<button class="btn btn-primary" name="action" value="finalize">Finalizar</button></form>
+      {% endif %}
+    </div>
+
+    {% if contract.is_final %}
+    <div class="card card-body mb-3 border-success">
+      <h2 class="h6">Downloads disponíveis</h2>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-success" href="{% url 'contracts:generated_download' contract.pk 'pdf' %}"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+        <a class="btn btn-outline-success" href="{% url 'contracts:generated_download' contract.pk 'docx' %}"><i class="bi bi-file-earmark-word me-1"></i>Word (DOCX)</a>
+        <a class="btn btn-outline-success" href="{% url 'contracts:generated_download' contract.pk 'html' %}"><i class="bi bi-filetype-html me-1"></i>HTML</a>
+      </div>
+      <hr>
+      <h2 class="h6">Salvar no arquivo de contratos</h2>
+      <form method="post" action="{% url 'contracts:generated_archive' contract.pk %}">{% csrf_token %}
+        <div class="row">
+          <div class="col-12">{% include "core/field.html" with field=archive_form.name %}</div>
+          <div class="col-md-6">{% include "core/field.html" with field=archive_form.contract_type %}</div>
+          <div class="col-md-6">{% include "core/field.html" with field=archive_form.contractor %}</div>
+          <div class="col-md-6">{% include "core/field.html" with field=archive_form.contract_date %}</div>
+          <div class="col-md-6">{% include "core/field.html" with field=archive_form.value %}</div>
+        </div>
+        <button class="btn btn-outline-primary"><i class="bi bi-archive me-1"></i>Arquivar como PDF</button>
+      </form>
+      {% if contract.archived_files.exists %}<p class="small text-muted mt-2 mb-0">Já arquivado {{ contract.archived_files.count }} vez(es).</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <details class="card card-body"><summary class="fw-semibold">Contexto enviado à IA</summary><div class="prewrap small mt-2">{{ contract.prompt_context }}</div></details>
+  </div>
+  <div class="col-xl-7">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h6 mb-0">{% if contract.is_final %}Versão final{% else %}Pré-visualização (campos em branco destacados){% endif %}</h2>
+      {% if contract.is_final %}<a class="small" href="{% url 'contracts:generated_preview' contract.pk %}?draft=1" target="preview">ver rascunho</a>{% endif %}
+    </div>
+    <iframe name="preview" class="doc-frame" sandbox src="{% url 'contracts:generated_preview' contract.pk %}" title="Pré-visualização do contrato"></iframe>
+  </div>
+</div>
+{% endblock %}

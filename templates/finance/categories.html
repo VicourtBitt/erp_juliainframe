@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Categorias{% endblock %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-tags me-2"></i>Categorias</h1></div>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card card-body">
+    <h2 class="h6">Nova categoria</h2>
+    <form method="post">{% csrf_token %}
+      {% include "core/form_errors.html" %}
+      {% for field in form %}{% include "core/field.html" %}{% endfor %}
+      <button class="btn btn-primary">Adicionar</button>
+    </form>
+  </div></div>
+  <div class="col-lg-8"><div class="card"><div class="table-responsive"><table class="table table-sm mb-0">
+    <thead><tr><th>Nome</th><th>Tipo</th><th class="text-end">Lançamentos</th><th></th></tr></thead>
+    <tbody>{% for c in categories %}
+      <tr><td>{{ c.name }}</td>
+        <td>{% if c.type == "sale" %}<span class="badge text-bg-success">Entrada</span>{% else %}<span class="badge text-bg-danger">Saída</span>{% endif %}</td>
+        <td class="text-end">{{ c.n }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'finance:category_edit' c.pk %}">Editar</a>
+          {% if not c.n %}<form method="post" action="{% url 'finance:category_delete' c.pk %}" class="d-inline" onsubmit="return confirm('Apagar a categoria {{ c.name|escapejs }}?')">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Apagar</button></form>{% endif %}
+        </td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">Nenhuma categoria cadastrada.</td></tr>{% endfor %}</tbody>
+  </table></div></div></div>
+</div>
+{% endblock %}

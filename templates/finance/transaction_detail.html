@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load brl %}
+{% block title %}{{ transaction.description }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="{% url 'finance:audit' %}" class="small"><i class="bi bi-arrow-left"></i> Auditoria</a>
+    <h1>{{ transaction.description }}</h1>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'finance:transaction_edit' transaction.pk %}"><i class="bi bi-pencil me-1"></i>Editar</a>
+    <a class="btn btn-outline-danger" href="{% url 'finance:transaction_delete' transaction.pk %}"><i class="bi bi-trash me-1"></i>Apagar</a>
+  </div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Tipo</div><div class="kpi-value fs-5">{{ transaction.get_type_display }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Categoria</div><div class="kpi-value fs-5">{{ transaction.category.name }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Valor total</div><div class="kpi-value fs-5">{{ transaction.total_amount|brl }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Quitado</div><div class="kpi-value fs-5">{{ transaction.paid_amount|brl }}</div></div></div></div>
+</div>
+<div class="card"><div class="card-header bg-white fw-semibold">Parcelas · operação em {{ transaction.transaction_date|date:"d/m/Y" }}</div>
+<div class="table-responsive"><table class="table table-sm mb-0">
+  <thead><tr><th>Nº</th><th class="text-end">Valor</th><th>Vencimento</th><th>Status</th><th>Pagamento</th><th></th></tr></thead>
+  <tbody>{% for i in installments %}
+    <tr><td>{{ i.number }}</td><td class="text-end">{{ i.amount|brl }}</td><td>{{ i.due_date|date:"d/m/Y" }}</td>
+      <td>{% include "finance/_status_badge.html" with inst=i %}</td><td>{{ i.payment_date|date:"d/m/Y"|default:"—" }}</td>
+      <td class="text-end">{% include "finance/_status_toggle.html" with inst=i %}</td></tr>
+  {% endfor %}</tbody>
+</table></div></div>
+{% endblock %}
